@@ -1,6 +1,5 @@
 package com.example.demo.services;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -12,13 +11,17 @@ import com.example.demo.domain.Role;
 import com.example.demo.domain.User;
 import com.example.demo.exceptions.InvalidInfoException;
 import com.example.demo.exceptions.ResourceNotFoundException;
+import com.example.demo.mapper.UserMapper;
 import com.example.demo.payload.UserPayload;
 import com.example.demo.repository.RoleRepository;
 import com.example.demo.repository.UserRepository;
 
+import lombok.AllArgsConstructor;
+
 import java.util.*;
 
 @Service
+@AllArgsConstructor
 public class UserService {
 
 	@Autowired
@@ -28,14 +31,13 @@ public class UserService {
 	private RoleRepository rolerepo;
 
 	@Autowired
-	private ModelMapper modelMapper;
+	private UserMapper userMapper;
 
 	@Autowired
 	private StorageService storageService;
 
 	@Autowired
 	private EmailService emailService;
-
 
 	public static String path = System.getProperty("user.dir") + "/src/main/resources/static/image";
 
@@ -44,7 +46,7 @@ public class UserService {
 		List<UserBo> listbo = new ArrayList<>();
 
 		for (User user : list) {
-			UserBo userbo = UsertoUserBo(user);
+			UserBo userbo = userMapper.UsertoUserBo(user);
 			listbo.add(userbo);
 		}
 
@@ -61,7 +63,11 @@ public class UserService {
 
 		User user = optional.get();
 
-		UserBo userbo = UsertoUserBo(user);
+		if (user != null) {
+			throw new InvalidInfoException("All Fields are Mandatory Please Enter Valid Data", HttpStatus.BAD_REQUEST);
+		}
+		UserBo userbo = userMapper.UsertoUserBo(user);
+
 		return userbo;
 	}
 
@@ -112,7 +118,7 @@ public class UserService {
 		this.repo.save(u);
 
 		User users = this.repo.findByName(name);
-		UserBo userbo = UsertoUserBo(users);
+		UserBo userbo = userMapper.UsertoUserBo(users);
 		return userbo;
 	}
 
@@ -178,7 +184,7 @@ public class UserService {
 		existingUser.setPassword(password);
 
 		this.repo.save(existingUser);
-		UserBo userbo = UsertoUserBo(existingUser);
+		UserBo userbo = userMapper.UsertoUserBo(existingUser);
 		return userbo;
 	}
 
@@ -195,8 +201,4 @@ public class UserService {
 		return;
 	}
 
-	public UserBo UsertoUserBo(User user) {
-		UserBo userbo = this.modelMapper.map(user, UserBo.class);
-		return userbo;
-	}
 }
